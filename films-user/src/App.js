@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
 import Dashboard from './Dashboard';
-import Suggestion from './Suggestion';
 
 
 

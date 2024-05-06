@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import OpenStreetMap  from './OpenStreetMap';
 
 function Dashboard({ username, userId }) {
   const [moviesData, setMoviesData] = useState([]);
@@ -7,6 +8,9 @@ function Dashboard({ username, userId }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [activeMenu, setActiveMenu] = useState('all');
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [country, setCountry] = useState(null);
 
   const fetchSubscription = async (userId, movieId) => {
     try {
@@ -81,9 +85,15 @@ function Dashboard({ username, userId }) {
     }
   };
 
-  const fetchMovies = async () => {
+  const fetchMovies = async (nationalité) => {
     try {
-      const response = await fetch(`http://localhost:3000/films?page=${currentPage}`);
+      let url = `http://localhost:3000/films?page=${currentPage}`;
+      if (nationalité) {
+        url += `&nationalité=${nationalité}`; // Ajoute le paramètre de nationalité à l'URL si une nationalité est spécifiée
+      }
+      
+      console.log(url);
+      const response = await fetch(url);
       if (response.ok) {
         const { data, totalPages } = await response.json();
         setMoviesData(data);
@@ -95,7 +105,7 @@ function Dashboard({ username, userId }) {
       console.error('Erreur lors de la récupération des films :', error.message);
     }
   };
-
+  
   const fetchSubscriptions = async () => {
     try {
       const subscriptionsData = {};
@@ -121,12 +131,63 @@ function Dashboard({ username, userId }) {
     return subscription?.[field] || false;
   };
 
-  useEffect(() => {
-    fetchMovies();
-  }, [currentPage]);
+
+  function getNationality(pays) {
+    const nationalityMap = {
+      'France': 'français',  //changer cette ligne pour assimuler le pays ou vous etes : italien,américain
+      'Italie': 'italien',
+      'Usa': 'américain',
+      // Ajoutez d'autres pays et leurs nationalités correspondantes ici
+    };
+  
+    // Vérifie si le pays existe dans la carte de nationalité
+    if (nationalityMap.hasOwnProperty(pays)) {
+      return nationalityMap[pays];
+    } else {
+      return 'Nationalité non trouvée';
+    }
+  }
+
+
+
+
+
+//sleep time
+useEffect(() => {
+  (async () => {
+    try {
+      country='France';
+      await  fetchMovies(getNationality(country) ); // country  =
+
+    } catch (err) {
+      console.log('Error occured when fetching books');
+    }
+  })();
+}, [currentPage]);
+
+//end sleep time
+
 
   useEffect(() => {
     fetchSubscriptions();
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+        },
+        (error) => {
+          console.error('Error getting geolocation:', error);
+        }
+      );
+    } else {
+      console.error('Geolocation is not supported by this browser.');
+    }
+
+
+
+
   }, [moviesData, userId]);
 
   const goToPage = (page) => {
@@ -145,6 +206,14 @@ function Dashboard({ username, userId }) {
     <div className="container mx-auto p-4 mt-4 h-screen">
       <header className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-semibold">Bienvenue <strong>{username} </strong></h1>
+        <h1></h1>
+        <p>Country: {country}</p>
+        <OpenStreetMap setCountry={setCountry} />
+
+        
+
+      
+      
         <img src="https://filmoflix.to/templates/filmoflix-cc/images/logo-filmoflix.png" alt="Logo" className="h-10 w-auto" />
       </header>
 
