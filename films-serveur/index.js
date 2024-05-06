@@ -72,6 +72,19 @@ app.post('/register', async (req, res) => {
   }
 
   try {
+    // Vérifier si l'e-mail existe déjà dans la base de données
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Cet e-mail est déjà utilisé.' });
+    }
+
+    // Vérifier si le nom d'utilisateur existe déjà dans la base de données
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res.status(400).json({ error: 'Ce nom d\'utilisateur est déjà utilisé.' });
+    }
+
+    // Si l'e-mail et le nom d'utilisateur sont uniques, créer un nouvel utilisateur
     const newUser = new User({ username, email, password });
     await newUser.save();
     return res.status(201).json({ message: 'Utilisateur inscrit avec succès.' });
